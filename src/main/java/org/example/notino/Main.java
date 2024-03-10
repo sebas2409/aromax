@@ -25,10 +25,14 @@ public class Main {
     }
 
     public static void getNotes() throws IOException {
+        //Obtener los perfumes del archivo JSON
         var mapper = new ObjectMapper();
         var file = new File("src/main/resources/notino.json");
         var perfumes = List.of(mapper.readValue(file, NotinoPerfume[].class));
+
+
         perfumes.forEach(perfume -> {
+            // Crear un hilo para cada perfume y obtener las notas
             var thread = new Thread(() -> {
                 try {
                     var cookiesButton = By.xpath("//*[@id=\"onetrust-accept-btn-handler\"]");
@@ -89,6 +93,7 @@ public class Main {
     }
 
     public static void initialInfo() throws IOException {
+        // Los xpath son las rutas de los elementos en el DOM
         var gripPath = By.xpath("//*[@id=\"productListWrapper\"]/div[2]/div");
         var cookiesButton = By.xpath("//*[@id=\"onetrust-accept-btn-handler\"]");
 
@@ -97,16 +102,21 @@ public class Main {
         driver.get("https://www.notino.es/perfumes/?npc=327");
         var driverWait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
+        //Hacer click en el botón de aceptar cookies una vez que se haya cargado
         var cookiesButtonElement = driverWait.until(ExpectedConditions.elementToBeClickable(cookiesButton));
         cookiesButtonElement.click();
 
+        // Esperar a que se carguen los elementos del grid de perfumes
         var elements = driverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(gripPath));
+
         elements.forEach(element -> {
             try {
+                // Hacer scroll hasta el elemento
                 new Actions(driver)
                         .scrollToElement(element)
                         .scrollFromOrigin(WheelInput.ScrollOrigin.fromElement(element), 0, 200)
                         .perform();
+                //Obtener los elementos del perfume
                 var link = element.findElement(By.tagName("a")).getAttribute("href");
                 var brand = element.findElement(By.tagName("h2")).getText();
                 var name = element.findElement(By.tagName("h3")).getText();
@@ -123,6 +133,8 @@ public class Main {
             }
         });
         System.out.println("Perfumes: " + perfumes.size());
+
+        // Escribir los perfumes en un archivo JSON
         var mapper = new ObjectMapper();
         var file = new File("src/main/resources/notino.json");
         mapper.writeValue(file, perfumes);
